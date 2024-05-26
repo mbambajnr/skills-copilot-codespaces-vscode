@@ -44,3 +44,11 @@ app.post('/api/comments', bodyParser.json(), function(req, res) {
   readComments(function(comments) {
     var comment = {
       id: Date.now(),
+    text: req.body.text
+    };
+    comments.push(comment);
+    writeComments(comments, function() {
+    res.json(comment);
+    });
+  });
+});
