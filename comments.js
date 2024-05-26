@@ -1,47 +1,46 @@
 //create web server
-var http = require('http');
-var url = require('url');
+var express = require('express');
+var app = express();
+var bodyParser = require('body-parser');
 var fs = require('fs');
-var qs = require('querystring');
-var comments = {
-    "comment1": "This is a comment",
-    "comment2": "This is a comment too"
-};
+var path = require('path');
+var commentsFile = path.join(__dirname, 'comments.json');
 
-http.createServer(function(req, res) {
-    var url_parts = url.parse(req.url, true);
-    var path = url_parts.pathname;
-    var query = url_parts.query;
-    console.log(path);
-    console.log(query);
-    if (path === '/comment') {
-        if (req.method === 'GET') {
-            res.writeHead(200, {
-                'Content-Type': 'text/plain'
-            });
-            res.end(JSON.stringify(comments));
-        } else if (req.method === 'POST') {
-            var body = '';
-            req.on('data', function(data) {
-                body += data;
-                if (body.length > 1e6) {
-                    req.connection.destroy();
-                }
-            });
-            req.on('end', function() {
-                var post = qs.parse(body);
-                var commentKey = "comment" + (Object.keys(comments).length + 1);
-                comments[commentKey] = post.comment;
-                res.writeHead(200, {
-                    'Content-Type': 'text/plain'
-                });
-                res.end(JSON.stringify(comments));
-            });
-        }
-    } else {
-        res.writeHead(404, {
-            'Content-Type': 'text/plain'
-        });
-        res.end("Page not found");
+// Path: comments.js
+//read comments from comments.json
+function readComments(callback) {
+  fs.readFile(commentsFile, function(err, data) {
+    if (err) {
+      console.log(err);
+      return callback([]);
     }
-}).listen(3000, '
+    var comments = JSON.parse(data);
+    callback(comments);
+  });
+}
+
+// Path: comments.js
+//write comments to comments.json
+function writeComments(comments, callback) {
+  fs.writeFile(commentsFile, JSON.stringify(comments, null, 4), function(err) {
+    if (err) {
+      console.log(err);
+    }
+    callback();
+  });
+}
+
+// Path: comments.js
+//get comments from comments.json
+app.get('/api/comments', function(req, res) {
+  readComments(function(comments) {
+    res.json(comments);
+  });
+});
+
+// Path: comments.js
+//post comments to comments.json
+app.post('/api/comments', bodyParser.json(), function(req, res) {
+  readComments(function(comments) {
+    var comment = {
+      id: Date.now(),
