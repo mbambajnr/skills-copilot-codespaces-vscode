@@ -1,54 +1,49 @@
-//create web server
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser');
-var fs = require('fs');
-var path = require('path');
-var commentsFile = path.join(__dirname, 'comments.json');
-
-// Path: comments.js
-//read comments from comments.json
-function readComments(callback) {
-  fs.readFile(commentsFile, function(err, data) {
-    if (err) {
-      console.log(err);
-      return callback([]);
-    }
-    var comments = JSON.parse(data);
-    callback(comments);
-  });
-}
-
-// Path: comments.js
-//write comments to comments.json
-function writeComments(comments, callback) {
-  fs.writeFile(commentsFile, JSON.stringify(comments, null, 4), function(err) {
-    if (err) {
-      console.log(err);
-    }
-    callback();
-  });
-}
-
-// Path: comments.js
-//get comments from comments.json
-app.get('/api/comments', function(req, res) {
-  readComments(function(comments) {
-    res.json(comments);
-  });
+//Create server
+const express = require('express');
+const app = express();
+const port = 3000;
+app.use(express.json());
+//Create array of comments
+const comments = [
+    { id: 1, comment: 'I love this product' },
+    { id: 2, comment: 'I hate this product' },
+    { id: 3, comment: 'This product is ok' }
+];
+//Get all comments
+app.get('/comments', (req, res) => {
+    res.send(comments);
 });
-
-// Path: comments.js
-//post comments to comments.json
-app.post('/api/comments', bodyParser.json(), function(req, res) {
-  readComments(function(comments) {
-    var comment = {
-      id: Date.now(),
-    text: req.body.text
+//Get comment by id
+app.get('/comments/:id', (req, res) => {
+    const comment = comments.find(c => c.id === parseInt(req.params.id));
+    if (!comment) res.status(404).send('The comment with the given ID was not found');
+    res.send(comment);
+});
+//Create comment
+app.post('/comments', (req, res) => {
+    const comment = {
+        id: comments.length + 1,
+        comment: req.body.comment
     };
     comments.push(comment);
-    writeComments(comments, function() {
-    res.json(comment);
-    });
-  });
+    res.send(comment);
+});
+//Update comment
+app.put('/comments/:id', (req, res) => {
+    const comment = comments.find(c => c.id === parseInt(req.params.id));
+    if (!comment) res.status(404).send('The comment with the given ID was not found');
+    comment.comment = req.body.comment;
+    res.send(comment);
+});
+//Delete comment
+app.delete('/comments/:id', (req, res) => {
+    const comment = comments.find(c => c.id === parseInt(req.params.id));
+    if (!comment) res.status(404).send('The comment with the given ID was not found');
+    const index = comments.indexOf(comment);
+    comments.splice(index, 1);
+    res.send(comment);
+});
+//Listen to port
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
