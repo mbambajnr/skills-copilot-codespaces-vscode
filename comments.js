@@ -1,9 +1,9 @@
-//Create webgit add comments.js server
+
 const express = require('express');
 const app = express();
 const port = 3000;
 app.use(express.json());
-
+//Create web server
 console.log("Creating web server...");
 //Create array of comments
 const comments = [
